@@ -31,6 +31,27 @@ route.post('/register', async (req, res) => {
 })
 
 
+ route.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({username:username});
+        const token = jwt.sign({ userId: user._id }, secret_Key, { expiresIn: '1h' });
+         res.json({ token });
+       console.log(user);
+         // Compare  password with the hashed 
+         const Matchuser = await bcrypt.compare(password, user.password);
+         if (Matchuser) {
+            let data = await userController.Login(username,password)
+             return res.send('Logged in successfully');
+         } else {
+             return res.status(401).send('Invalid credentials');
+        }
+       
+     } catch (e) {
+        
+        return res.status(500).send('Server error');
+    }
+});
 
 
 
@@ -99,27 +120,6 @@ route.patch("/editUserwithname/:username", async (req, res) => {
         res.status(500).send('server error')
     }
 
-// route.post('/login', async (req, res) => {
-//     try {
-//         const { username, password } = req.body;
-//         const user = await User.findOne({username:username});
-//         const token = jwt.sign({ userId: user._id }, secret_Key, { expiresIn: '1h' });
-//         res.json({ token });
-//         console.log(user);
-//         // Compare  password with the hashed 
-//         const Matchuser = await bcrypt.compare(password, user.password);
-//         if (Matchuser) {
-//             let data = await userController.Login(username,password)
-//             return res.send('Logged in successfully');
-//         } else {
-//             return res.status(401).send('Invalid credentials');
-//         }
-       
-//     } catch (e) {
-        
-//         return res.status(500).send('Server error');
-//     }
-// });
 // //Middleware to verify JWT token
 // const authenticateToken = (req, res, next) => {
 //     const token = req.header('Authorization');
