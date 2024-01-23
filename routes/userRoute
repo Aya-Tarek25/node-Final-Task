@@ -1,0 +1,180 @@
+const userController = require('../controllers/UserController');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const route = express.Router();
+const bcrypt = require('bcrypt');
+const User = require("../models/User");
+const secret_Key = "yoyo";
+const authenticateToken = require('./authmiddleware');
+
+route.get('/', (req, res) => {
+    res.send('you are in user route')
+})
+
+//add new user
+route.post('/register', async (req, res) => {
+    try{
+        
+    let { username,email ,password,gender,followers,following} = req.body;
+    bcrypt.hash(password, 10, async function (err, hash) {
+        let data = await userController.Register(username,email,hash,gender,followers,following)
+        console.log(data);
+        res.send(`user was registered successfully`);
+    });
+}
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+
+})
+
+
+
+
+
+
+route.delete("/deleteUser/:username", async (req, res) => {
+    try {
+        const username= req.params.username;
+        let data = await userController.deleteUser(username);
+       // console.log(data);
+        if (data != "error") {
+             res.send('user deleted successfully');  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+
+
+
+
+route.patch("/editUser", async (req, res) => {
+    try {
+        
+        const {username,newusername,password,email,followers,following}= req.body;
+        bcrypt.hash(password, 10, async function (err, hash) {
+        let data = await userController.editUser(username,newusername,hash,email,followers,following);
+       // console.log(data);
+        if (data != "error") {
+             res.send(`user was edited successfully, user:${data}`);  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    });
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+route.patch("/editUserwithname/:username", async (req, res) => {
+    try {
+        const username = req.params.username;
+        const { newusername,email, password,followers,following } = req.body;
+        bcrypt.hash(password, 10, async function (err, hash) {
+       let data = await userController.editUser(username, newusername,email,hash,followersmfollowing);
+       console.log("Edit User Result:", data);
+       // console.log(data);
+        if (data != "error") {
+             res.send(`user was edited successfully, user:${data}`);  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    });
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+// route.post('/login', async (req, res) => {
+//     try {
+//         const { username, password } = req.body;
+//         const user = await User.findOne({username:username});
+//         const token = jwt.sign({ userId: user._id }, secret_Key, { expiresIn: '1h' });
+//         res.json({ token });
+//         console.log(user);
+//         // Compare  password with the hashed 
+//         const Matchuser = await bcrypt.compare(password, user.password);
+//         if (Matchuser) {
+//             let data = await userController.Login(username,password)
+//             return res.send('Logged in successfully');
+//         } else {
+//             return res.status(401).send('Invalid credentials');
+//         }
+       
+//     } catch (e) {
+        
+//         return res.status(500).send('Server error');
+//     }
+// });
+// //Middleware to verify JWT token
+// const authenticateToken = (req, res, next) => {
+//     const token = req.header('Authorization');
+//     if (!token) return res.status(401).send('Unauthorized');
+  
+//     jwt.verify(token,secret_Key, (err, user) => {
+//       if (err) return res.status(403).send('Forbidden');
+//       req.user = user;
+//       next();
+//     });
+ // };
+  route.get('/profile/:userId', authenticateToken, async (req, res) => {
+    const userId = req.params.userId;
+    const result = await userController.getUserProfile(userId);
+    res.json(result);
+  });
+  
+
+route.get("/getAllUsers", async (req, res) => {
+    try {
+        let data = await userController.getAllUsers();
+       // console.log(data);
+        if (data != "error") {
+            res.json({
+                users: data,
+                msg: "ok",
+                status: 200
+            });
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+
+})
+// Follow a user
+route.post('/follow/:userId', authenticateToken, async (req, res) => {
+    const { userId} = req.params.userId;
+    const { followUserId} = req.body;
+    const result = await userController.followUser(userId, followUserId);
+    res.send(result);
+  });
+  // unFollow a user
+  route.post('/unfollow/:userId', authenticateToken, async (req, res) => {
+    const { userId} = req.params.userId;
+    const { unfollowUserId} = req.body;
+    const result = await userController.unfollowUser(userId, unfollowUserId);
+    res.send(result);
+  });
+  
+module.exports = route;
+//module.exports = authenticateToken;
