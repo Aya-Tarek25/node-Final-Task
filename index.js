@@ -51,8 +51,8 @@ app.use(authenticateToken);
 // routes
 app.use('/user', userRoute);
 app.use('/blog', blogRoute);
-//app.use('/auth', authRoute);
-//app.use('/profile', profileRoute);
+app.use('/auth', authRoute);
+
 
 
 
